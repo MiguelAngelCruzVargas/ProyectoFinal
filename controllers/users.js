@@ -3,30 +3,28 @@ const bcrypt = require('bcrypt');
 const playersModel = require('../models/users')
 const pool = require('../db');
 
-//################### ENDPOINT ######################
-
-
-
+//####################################################
+//              ENDPOINT'S --> OPERACIONES CRUD
 //################ mostrar todo ######################
 const listUsers = async (req = request, res = response) => {
   console.log('List All')
   let conn;
 
   try {
-      conn = await pool.getConnection();
+    conn = await pool.getConnection();
 
-      const playersAll = await conn.query(playersModel.getAll, (err) => {
-          if (err) {
-              throw err
-          }
-      });
+    const playersAll = await conn.query(playersModel.getAll, (err) => {
+      if (err) {
+        throw err
+      }
+    });
 
-      res.json(playersAll);
+    res.json({msg:'RESULT:',playersAll});
   } catch (error) {
-      console.log(error);
-      res.status(500).json(error);
+    console.log(error);
+    res.status(500).json(error);
   } finally {
-      if (conn) conn.end();
+    if (conn) conn.end();
   }
 };
 
@@ -46,19 +44,19 @@ const listPlayers = async (req = request, res = response) => {
 
     //PAGINACION
     // Obtiene los parámetros de consulta 'limit' y 'offset' 
-    const limit = parseInt(req.query.limit); 
+    const limit = parseInt(req.query.limit);
     const offset = parseInt(req.query.offset);
-   
+
     /*
      La consulta utiliza el modelo 'playersModel.getPlayers' con los parámetros 'limit' y 'offset'
      El resultado se almacena en la variable 'players'
     */
 
-     /*
-     obtiene los resultados (tomando en cuenta la paginacion), y los almacena en la
-     variable players
-     */
-    const players = await conn.query(playersModel.getPlayers, [limit , offset], (err) => { 
+    /*
+    obtiene los resultados (tomando en cuenta la paginacion), y los almacena en la
+    variable players
+    */
+    const players = await conn.query(playersModel.getPlayers, [limit, offset], (err) => {
       if (err) {
         // Si hay un error en la consulta, se lanza una excepción
         throw err;
@@ -66,7 +64,7 @@ const listPlayers = async (req = request, res = response) => {
     });
 
     // se muestra los resultados de lasolicitud HTTP  de la consulta en formato JSON
-    res.json(players);
+    res.json({msg:'RESULT:',players});
   } catch (error) {
     // Captura cualquier error que ocurra dentro del bloque 'try' y maneja la respuesta en caso de error
     console.log(error);
@@ -78,11 +76,11 @@ const listPlayers = async (req = request, res = response) => {
   }
 };
 
-//###################### segun yo ya funciona #################
-// 7.b. listUsersByID, busqueda porque ID 
+//###################### listUsersByID, busqueda porque ID #################
 const listPlayersByID = async (req = request, res = response) => {
-  const { id } = req.params;
+  const { id } = req.params; //recibe el id ingresado por parametros
 
+  //si el id no es valido muestra el mensaje "--Invalid ID--"
   if (isNaN(id)) {
     res.status(400).json({ msg: '--Invalid ID--' });
     return;
@@ -92,15 +90,18 @@ const listPlayersByID = async (req = request, res = response) => {
 
   try {
     conn = await pool.getConnection();
-
+//obtiene el id con ayuda de la consulta getByID
     const [player] = await conn.query(playersModel.getByID, [id]);
 
+    //si el id proporcionado no se encunetra en l abase de datos 
+    //Se muestra un mensaje indicándolo.
     if (!player) {
       res.status(404).json({ msg: 'Player not found' });
       return;
     }
-
-    res.json(player);
+//si el ID es valido y se cuentra en la BD se mostraran los datos de este
+//en formato JSON
+    res.json({msg: 'RESULT',player});
   } catch (error) {
     console.log(error);
     res.status(500).json(error);
@@ -109,38 +110,46 @@ const listPlayersByID = async (req = request, res = response) => {
   }
 };
 
-//####################BUSQUEDA POR NOMBRE ####################
-/*
-const listPName = async (req = request, res = response) => {
-  const { name } = req.params;
+//#################### BUSQUEDA POR NOMBRE ####################
 
+const listPlayersByPartialName = async (req = request, res = response) => {
+  // Extraer el nombre del jugador desde el cuerpo de la solicitud.
+  const { playerName } = req.body; //recibe el parametro
 
+  // Verificar si el nombre del jugador es válido.
+  if (!playerName) {
+    res.status(400).json({ msg: '--Invalid Player Name--' }); // Enviar respuesta de error 400 si no hay nombre de jugador.
+    return;
+  }
+
+  //conexión a la base de datos.
   let conn;
 
   try {
+    // Establecer conexión con la base de datos.
     conn = await pool.getConnection();
 
-    const [player] = await conn.query(playersModel.getByword, [name]);
+    // Consultar la base de datos para obtener jugadores cuyo nombre coincida parcialmente.
+    const [players] = await conn.query(playersModel.getByword, [`%${playerName}%`]);
 
-    if (!player) {
-      res.status(404).json({ msg: 'Player not found' });
+    // Verificar si se encontraron jugadores.
+    if (!players || players.length === 0) {
+      res.status(404).json({ msg: 'No players found for the given name' }); // Enviar respuesta de error 404 si no se encontraron jugadores.
       return;
     }
 
-    res.json(player);
+    // Enviar la lista de jugadores en formato JSON como respuesta exitosa.
+    res.json({msg:'RESULT:',players});
   } catch (error) {
-    console.log(error);
-    res.status(500).json(error);
+    console.log(error); // Imprimir el error en la consola para propósitos de depuración.
+    res.status(500).json(error); // Enviar respuesta de error 500 si ocurre un error durante la ejecución.
   } finally {
-    if (conn) conn.end();
+    if (conn) conn.end(); 
   }
 };
-*/
 
-//##########################################
-//################## ADDUSER #################
 
-//###############################################################
+//######################## ADDPLAYER #################################
 const addPlayer = async (req = request, res = response) => {
   // Imprime un mensaje en la consola cuando se ingresa a la función
   console.log('AddPlayer');
@@ -269,7 +278,6 @@ const addPlayer = async (req = request, res = response) => {
     }
 
 
-
     // Si no existe, realiza una consulta para agregar el nuevo jugador a la base de datos
     const playerAdded = await conn.query(playersModel.addRow, [...player]);
 
@@ -290,96 +298,96 @@ const addPlayer = async (req = request, res = response) => {
     if (conn) conn.end();
   }
 };
+//########################### UPDATE ########################
 
-
-//################### UPDATE ####################
-// use patch
-// 7.d. updateUser
+//  updateUser
 const updatePlayer = async (req = request, res = response) => {
   let conn;
 
-  const { id } = req.params; //
-
-  //campos de la base de datos
-  const {
-    short_name,
-    Full_name,
-    overall,
-    age,
-    dob,
-    height_cm,
-    weight_kg,
-    club_position,
-    Position,
-    club_name,
-    league_name,
-    nationality_name,
-    club_jersey_number,
-    preferred_foot,
-    player_traits,
-    pace,
-    shooting,
-    passing,
-    dribbling,
-    defending,
-    attacking,
-    power
-  } = req.body;
-
-  // Recibe los datos enviados por Postman u otro medio
-  let player = [
-    short_name,
-    Full_name,
-    overall,
-    age,
-    dob,
-    height_cm,
-    weight_kg,
-    club_position,
-    Position,
-    club_name,
-    league_name,
-    nationality_name,
-    club_jersey_number,
-    preferred_foot,
-    player_traits,
-    pace,
-    shooting,
-    passing,
-    dribbling,
-    defending,
-    attacking,
-    power
-  ];
-
   try {
-    conn = await pool.getConnection(); // Conexión a la base de datos
+    // Conexión a la base de datos
+    conn = await pool.getConnection();
 
-    //obtine el id indicado para verificar si este existe
+    const { id } = req.params; // Obtiene el ID del jugador de los parámetros de la solicitud
+
+    // Campos de la base de datos obtenidos del cuerpo de la solicitud
+    const {
+      short_name,
+      Full_name,
+      overall,
+      age,
+      dob,
+      height_cm,
+      weight_kg,
+      club_position,
+      Position,
+      club_name,
+      league_name,
+      nationality_name,
+      club_jersey_number,
+      preferred_foot,
+      player_traits,
+      pace,
+      shooting,
+      passing,
+      dribbling,
+      defending,
+      attacking,
+      power
+    } = req.body;
+
+    // Arreglo con los datos del jugador
+    let player = [
+      short_name,
+      Full_name,
+      overall,
+      age,
+      dob,
+      height_cm,
+      weight_kg,
+      club_position,
+      Position,
+      club_name,
+      league_name,
+      nationality_name,
+      club_jersey_number,
+      preferred_foot,
+      player_traits,
+      pace,
+      shooting,
+      passing,
+      dribbling,
+      defending,
+      attacking,
+      power
+    ];
+
+    // Obtiene el jugador existente usando el ID
     const [playerExists] = await conn.query(
       playersModel.getByID,
       [id],
       (err) => { throw err; }
     );
-//sino existe manda un mensaje indicando que el jugador no existe
-    if (!playerExists) {
+
+    // Si el jugador no existe, devuelve un mensaje de error
+    if (!playerExists === undefined) {
       res.status(404).json({ msg: 'Player not found' });
       return;
     }
-//en las singuentes condicionales se realiza la misma operacion de verificacion
-//en algunos campos que yo considero no se deben repetir
+
+    // Verifica si ya existe un jugador con el mismo nombre corto
     if (short_name === playerExists.short_name) {
-      res.status(409).json({ msg: 'Short name already exists' });
+      res.status(409).json({ msg: `Short name '${short_name}' already exists` });
       return;
     }
 
+    // Verifica si ya existe un jugador con el mismo número de camiseta
     if (club_jersey_number === playerExists.club_jersey_number) {
-      res.status(409).json({ msg: 'club jersey number already exists' });
+      res.status(409).json({ msg: 'Club jersey number already exists' });
       return;
-
-
     }
-    // Contiene la información de la base de datos
+
+    // Guarda la información actual del jugador
     let oldPlayer = [
       playerExists.short_name,
       playerExists.Full_name,
@@ -404,44 +412,46 @@ const updatePlayer = async (req = request, res = response) => {
       playerExists.attacking,
       playerExists.power
     ];
-    //muestra los datos anteriores de los campos y un mensaje indicando que 
-    //se actualizo correctamente
-    res.json({ msg: 'Player updated successfully', ...oldPlayer });
-    //return;
-    
+
+    // Reemplaza los campos vacíos del nuevo jugador con los valores actuales
     player.forEach((playerData, index) => {
       if (!playerData) {
         player[index] = oldPlayer[index];
-      };
+      }
     });
 
-    const [playerUpdated] = conn.query(playersModel.updateUser, [...player, id], (err) => {
-      throw err;
-    });
+    // Devuelve un mensaje de éxito y actualiza el jugador en la base de datos
+    res.json({ msg: 'Player updated successfully' });
+    console.log('Player updated successfully');
+    const [playerUpdated] = await conn.query(playersModel.updateUser, [...player, id]);
 
+    // Muestra el resultado después del éxito en la consola
+    console.log('Response after success:', res);
 
+    // Si no se actualizó ningún jugador, devuelve un mensaje de error
     if (playerUpdated.affectedRows === 0) {
-      throw new Error('Player not updated');
+      return res.status(400).json({ msg: 'Player not updated' });
     }
 
   } catch (err) {
+    // Manejo de errores, devuelve un mensaje de error
     res.status(400).json(err);
     return;
   } finally {
-    if (conn) conn.end(); // Libera la conexión a la base de datos
+    // Libera la conexión a la base de datos en cualquier caso
+    if (conn) conn.end();
   }
 };
 
-//############################## sirve #####################
-// 7.e. deteleUsers
 
+//############################## deteleUsers #####################
 const deteleUsers = async (req = request, res = response) => {
   let conn;
   const { id } = req.params;
 
   try {
     conn = await pool.getConnection();
-//se obtiene el ID pasado como paramrtro  en la url
+    //se obtiene el ID pasado como paramrtro  en la url
     const [playerExists] = await conn.query(
       playersModel.getByID,
       [id],
@@ -449,7 +459,7 @@ const deteleUsers = async (req = request, res = response) => {
         throw err;
       }
     );
-//si el ID no se encuentra en la base de datos se manda un mesaje indicando no encontrado
+    //si el ID no se encuentra en la base de datos se manda un mesaje indicando no encontrado
     if (!playerExists || playerExists.is_active === 0) {
       res.status(404).json({ msg: 'Player not found' });
       return;
@@ -462,11 +472,11 @@ const deteleUsers = async (req = request, res = response) => {
         if (err) throw err;
       }
     );
-// en caso de error se manda un mensaje indicandolo
+    // en caso de error se manda un mensaje indicandolo
     if (playerDelete.affectedRows === 0) {
       throw new Error({ message: 'Failed to delete player' });
     }
-//mensaje indicando que el jugador fue borrado exitosamente
+    //mensaje indicando que el jugador fue borrado exitosamente
     res.json({ msg: 'Player deleted successfully' });
   } catch (error) {
     console.log(error);
@@ -482,5 +492,6 @@ module.exports = {
   addPlayer,
   updatePlayer,
   deteleUsers,
-  listUsers
+  listUsers, 
+  listPlayersByPartialName
 };

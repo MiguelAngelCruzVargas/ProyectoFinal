@@ -1,10 +1,12 @@
 const usermodels = {
+  // Obtener todos los registros de la tabla 'fifa'
   getAll: `
   SELECT 
   * 
 FROM 
   fifa`
   ,
+  // Obtener jugadores con paginación
     getPlayers: `
     SELECT 
     * 
@@ -12,6 +14,7 @@ FROM
     fifa
   LIMIT ?  OFFSET ?`,
 
+ // Obtener un jugador por su ID
     getByID: `
     SELECT
     *
@@ -20,12 +23,15 @@ FROM
     WHERE
     id= ?
     `,
+
+    // Buscar jugadores por un patrón en su nombre corto (short_name)
     getByword: `
     SELECT *
     FROM fifa
     WHERE short_name LIKE CONCAT('%', ?, '%')
 `,
 
+ // Insertar un nuevo jugador en la tabla 'fifa'
     addRow:`
     INSERT INTO fifa (
       id,
@@ -54,6 +60,7 @@ FROM
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?)
     `,
    
+// Obtener un jugador por su nombre corto (short_name)
     getByShortName: `
     SELECT 
     * 
@@ -62,6 +69,7 @@ FROM
     WHERE short_name = ?
     `,
 
+// Obtener el ID de un jugador por su nombre completo (Full_name)
     getByFull_name: `
     SELECT 
     id 
@@ -70,6 +78,8 @@ FROM
      WHERE
       Full_name = ?
     `,
+
+// Obtener el ID de un jugador por su número de camiseta en el club
     getByclub_jersey_number: `
     SELECT 
     id 
@@ -78,23 +88,8 @@ FROM
      WHERE
       Full_name = ?
     `,
-    /*/updateUser: `
-         UPDATE 
-         Users
-         SET 
-             username = ?,
-             email = ?,
-             password = ?,
-             name = ?,
-             lastname = ?,
-             phone_number = ?,
-             role_id = ?,
-             is_active = ?
-         WHERE
-             id = ?
-  `,*/
 
-
+ // Actualizar la información de un jugador por su ID
   updateUser: `
   UPDATE fifa
     SET 
@@ -123,6 +118,7 @@ FROM
     WHERE id = ?
 `,
 
+// Eliminar un jugador por su ID
   deleteRow:`DELETE FROM fifa WHERE id = ?`,
 }
 
