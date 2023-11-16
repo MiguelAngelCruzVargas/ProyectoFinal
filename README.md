@@ -1,2 +1,1 @@
-# ProyectoFinal
-en este repositorio, se subiran todos los avances del proyecto final
+proyecto final, uso de endpoind con operaciones crud para una base de datos
