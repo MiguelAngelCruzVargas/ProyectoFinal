@@ -353,6 +353,7 @@ const updatePlayer = async (req = request, res = response) => {
       attacking,
       power
     ];
+    
     try {
       // Conexión a la base de datos
       conn = await pool.getConnection();
@@ -365,8 +366,8 @@ const updatePlayer = async (req = request, res = response) => {
     );
 
     // Si el jugador no existe, devuelve un mensaje de error
-    if (playerExists === undefined || playerExists === null) {
-      res.status(404).json({ msg: 'Player not found' });
+    if (!playerExists) {
+      res.status(404).json({ msg: `Player '${id}' not found` });
       return;
     }
 
@@ -414,16 +415,20 @@ const updatePlayer = async (req = request, res = response) => {
         player[index] = oldPlayer[index];
       }
     });
+
     console.log('Player updated successfully');console.log('Player updated successfully');
-    const [playerUpdated] = await conn.query(playersModel.updateUser, [...player, id]);
+
+    const playerUpdated = await conn.query(playersModel.updateUser, [...player, id], (err) => {
+      if (err) throw err;
+    });
 
     // Si no se actualizó ningún jugador, devuelve un mensaje de error
     if (playerUpdated.affectedRows === 0) {
-      return res.status(400).json({ msg: 'Player not updated' });
+        throw new Error('Player not updated' );
     }
     
     // Devuelve un mensaje de éxito y actualiza el jugador en la base de datos
-    res.json({ msg: 'Player updated successfully'});
+    res.json({ msg: 'Player updated successfully',...oldPlayer});
     
   } catch (err) {
     // Manejo de errores, devuelve un mensaje de error
